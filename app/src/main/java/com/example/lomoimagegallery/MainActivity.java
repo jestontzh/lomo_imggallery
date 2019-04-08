@@ -22,6 +22,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ProgressBar;
 
 import java.util.List;
 
@@ -32,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String API_KEY = "12114072-7845e9d84252d3611d51cff25";
     private static final int RESULTS_PER_PAGE = 30;
 
+    private ProgressBar progressBar;
     private StaggeredGridLayoutManager sglManager;
     private RecyclerView recyclerView;
     private int spanCount;
@@ -47,6 +50,9 @@ public class MainActivity extends AppCompatActivity {
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.main_toolbar);
         setSupportActionBar(toolbar);
+
+        progressBar = (ProgressBar) findViewById(R.id.indeterminate_bar);
+        progressBar.setVisibility(View.INVISIBLE);
 
         recyclerView = (RecyclerView) findViewById(R.id.image_recycler_view);
         recyclerView.setHasFixedSize(true);
@@ -85,12 +91,17 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG, String.format("String captured: %s", query));
                 searchQuery = query;
 
+                progressBar.setVisibility(View.VISIBLE);
+
                 Call<HttpResponse> call = HttpRequestClient.getClient().create(HttpRequest.class).requestImages(API_KEY, convertQuery(searchQuery), pageNum, RESULTS_PER_PAGE);
                 call.enqueue(new Callback<HttpResponse>() {
                     @Override
                     public void onResponse(Call<HttpResponse> call, Response<HttpResponse> response) {
                         Log.i(TAG, String.format("%b %d", response.isSuccessful(), response.code()));
                         mList = response.body().getHits();
+
+                        progressBar.setVisibility(View.INVISIBLE);
+
                         PixabayImageRecyclerViewAdapter rcAdapter = new PixabayImageRecyclerViewAdapter(MainActivity.this, mList);
                         recyclerView.setAdapter(rcAdapter);
                     }
