@@ -6,6 +6,8 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.MenuItemCompat;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -14,6 +16,7 @@ import retrofit2.http.POST;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -27,9 +30,13 @@ public class MainActivity extends AppCompatActivity {
     private static final int ACCESS_INTERNET_PERMISSIONS = 1;
     private static final String TAG = "MainActivity";
     private static final String API_KEY = "12114072-7845e9d84252d3611d51cff25";
-    private static final String PIXABAY_URL = "https://pixabay.com/api/";
+
+    private StaggeredGridLayoutManager sglManager;
+    private RecyclerView recyclerView;
+    private int spanCount;
 
     private String searchQuery;
+    private List<PixalbayImages> mList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +45,23 @@ public class MainActivity extends AppCompatActivity {
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.main_toolbar);
         setSupportActionBar(toolbar);
+
+        recyclerView = (RecyclerView) findViewById(R.id.image_recycler_view);
+        recyclerView.setHasFixedSize(true);
+
+        switch(getScreenWidthFactor()) {
+            case 2:
+                spanCount = 2;
+                break;
+            case 3:
+                spanCount = 3;
+                break;
+            case 4:
+                spanCount = 4;
+                break;
+        }
+        sglManager = new StaggeredGridLayoutManager(spanCount, StaggeredGridLayoutManager.VERTICAL);
+        recyclerView.setLayoutManager(sglManager);
 
         if (ContextCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET}, ACCESS_INTERNET_PERMISSIONS);
@@ -64,8 +88,10 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(Call<HttpResponse> call, Response<HttpResponse> response) {
                         Log.i(TAG, String.format("%b %d", response.isSuccessful(), response.code()));
-                        List<PixalbayImages> mList = response.body().getHits();
-                        Log.i(TAG, String.format("%d", mList.size()));
+                        mList = response.body().getHits();
+
+                        PixabayImageRecyclerViewAdapter rcAdapter = new PixabayImageRecyclerViewAdapter(MainActivity.this, mList);
+                        recyclerView.setAdapter(rcAdapter);
                     }
 
                     @Override
@@ -102,5 +128,17 @@ public class MainActivity extends AppCompatActivity {
 
     private String convertQuery(String query) {
         return query.replace(" ", "+");
+    }
+
+    private int getScreenWidthFactor() {
+        int currentWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
+        Log.i(TAG, String.format("%d", currentWidth));
+        if (currentWidth <= 1280) {
+            return 2;
+        } else if (currentWidth <= 1600) {
+            return 3;
+        } else {
+            return 4;
+        }
     }
 }
