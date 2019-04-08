@@ -10,5 +10,8 @@ import retrofit2.http.Query;
 public interface HttpRequest {
 
     @POST(".")
-    Call<HttpResponse> requestImages(@Query("key") String apiKey, @Query("q") String query);
+    Call<HttpResponse> requestImages(@Query("key") String apiKey,
+                                     @Query("q") String query,
+                                     @Query("page") int page,
+                                     @Query("per_page") int resultsPerPage);
 }

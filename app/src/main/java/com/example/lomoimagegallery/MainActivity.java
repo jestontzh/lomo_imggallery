@@ -30,10 +30,12 @@ public class MainActivity extends AppCompatActivity {
     private static final int ACCESS_INTERNET_PERMISSIONS = 1;
     private static final String TAG = "MainActivity";
     private static final String API_KEY = "12114072-7845e9d84252d3611d51cff25";
+    private static final int RESULTS_PER_PAGE = 30;
 
     private StaggeredGridLayoutManager sglManager;
     private RecyclerView recyclerView;
     private int spanCount;
+    private int pageNum = 1; // default to 1
 
     private String searchQuery;
     private List<PixalbayImages> mList;
@@ -83,13 +85,12 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG, String.format("String captured: %s", query));
                 searchQuery = query;
 
-                Call<HttpResponse> call = HttpRequestClient.getClient().create(HttpRequest.class).requestImages(API_KEY, convertQuery(searchQuery));
+                Call<HttpResponse> call = HttpRequestClient.getClient().create(HttpRequest.class).requestImages(API_KEY, convertQuery(searchQuery), pageNum, RESULTS_PER_PAGE);
                 call.enqueue(new Callback<HttpResponse>() {
                     @Override
                     public void onResponse(Call<HttpResponse> call, Response<HttpResponse> response) {
                         Log.i(TAG, String.format("%b %d", response.isSuccessful(), response.code()));
                         mList = response.body().getHits();
-
                         PixabayImageRecyclerViewAdapter rcAdapter = new PixabayImageRecyclerViewAdapter(MainActivity.this, mList);
                         recyclerView.setAdapter(rcAdapter);
                     }
