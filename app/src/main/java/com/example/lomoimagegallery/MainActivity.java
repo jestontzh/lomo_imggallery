@@ -36,17 +36,11 @@ public class MainActivity extends AppCompatActivity {
     private static final String API_KEY = "12114072-7845e9d84252d3611d51cff25";
     private static final int RESULTS_PER_PAGE = 30;
 
-    private static final int SWIPE_THRESHOLD = 100;
-    private static final int SWIPE_VELOCITY_THRESHOLD = 100;
-
     private ProgressBar progressBar;
     private StaggeredGridLayoutManager sglManager;
     private RecyclerView recyclerView;
     private int spanCount;
     private int pageNum = 1; // default to 1
-
-    private float downX;
-    private float upX;
 
     private String searchQuery;
     private List<PixalbayImages> mList;
@@ -84,6 +78,32 @@ public class MainActivity extends AppCompatActivity {
         } else {
             Log.i(TAG, "INTERNET permission already granted");
         }
+
+        recyclerView.setOnTouchListener(new OnSwipeTouchListener(this) {
+            @Override
+            void onSwipeLeft() {
+                // Go next page
+                pageNum++;
+                Log.i(TAG, String.format("Current page no: %d", pageNum));
+                Toast.makeText(getApplicationContext(), String.format("Page %d", pageNum), Toast.LENGTH_SHORT).show();
+                loadImages();
+            }
+
+            @Override
+            void onSwipeRight() {
+                // Go previous page
+                if (pageNum == 1) {
+                    Log.i(TAG, String.format("Already at page 1"));
+                    Toast.makeText(getApplicationContext(), "Already at page 1", Toast.LENGTH_SHORT).show();
+                    return;
+                } else {
+                    pageNum--;
+                    Log.i(TAG, String.format("Current page no: %d", pageNum));
+                    Toast.makeText(getApplicationContext(), String.format("Page %d", pageNum), Toast.LENGTH_SHORT).show();
+                    loadImages();
+                }
+            }
+        });
     }
 
     @Override
@@ -98,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
             public boolean onQueryTextSubmit(String query) {
                 Log.i(TAG, String.format("String captured: %s", query));
                 searchQuery = query;
-
+                pageNum = 1;
                 progressBar.setVisibility(View.VISIBLE);
 
                 loadImages();
