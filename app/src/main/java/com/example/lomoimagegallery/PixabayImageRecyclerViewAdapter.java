@@ -15,16 +15,24 @@ public class PixabayImageRecyclerViewAdapter extends RecyclerView.Adapter<Pixaba
 
     private Context context;
     private List<PixalbayImages> imageList;
+    private RecyclerViewItemClickListener itemClickListener;
 
-    public PixabayImageRecyclerViewAdapter(Context context, List<PixalbayImages> imageList) {
+    public PixabayImageRecyclerViewAdapter(Context context, List<PixalbayImages> imageList, RecyclerViewItemClickListener itemClickListener) {
         this.context = context;
         this.imageList = imageList;
+        this.itemClickListener = itemClickListener;
     }
 
     @Override
     public PixabayImageViewHolders onCreateViewHolder(ViewGroup parent, int position) {
         View layoutView = LayoutInflater.from(parent.getContext()).inflate(R.layout.image_item, null);
-        PixabayImageViewHolders holder = new PixabayImageViewHolders(layoutView);
+        final PixabayImageViewHolders holder = new PixabayImageViewHolders(layoutView);
+        layoutView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                itemClickListener.onItemClick(v, holder.getAdapterPosition());
+            }
+        });
         return holder;
     }
 

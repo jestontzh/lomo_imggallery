@@ -24,6 +24,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -143,7 +144,13 @@ public class MainActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.INVISIBLE);
                 try {
                     mList = response.body().getHits();
-                    PixabayImageRecyclerViewAdapter rcAdapter = new PixabayImageRecyclerViewAdapter(MainActivity.this, mList);
+                    PixabayImageRecyclerViewAdapter rcAdapter = new PixabayImageRecyclerViewAdapter(getApplicationContext(), mList, new RecyclerViewItemClickListener() {
+                        @Override
+                        public void onItemClick(View v, int position) {
+                            // TODO: FRAGMENT SET UP HERE
+                            Log.i(TAG, mList.get(position).getLargeImageURL());
+                        }
+                    });
                     recyclerView.setAdapter(rcAdapter);
                 } catch (NullPointerException e) {
                     if (pageNum == 1) {
