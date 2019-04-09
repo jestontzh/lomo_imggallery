@@ -6,6 +6,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.MenuItemCompat;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import retrofit2.Call;
@@ -40,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private StaggeredGridLayoutManager sglManager;
     private RecyclerView recyclerView;
+    private ImageFragment imageFragment;
     private int spanCount;
     private int pageNum = 1; // default to 1
 
@@ -87,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
                 pageNum++;
                 Log.i(TAG, String.format("Current page no: %d", pageNum));
                 Toast.makeText(getApplicationContext(), String.format("Page %d", pageNum), Toast.LENGTH_SHORT).show();
+                getSupportFragmentManager().beginTransaction().remove(imageFragment).commit();
                 loadImages();
             }
 
@@ -101,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
                     pageNum--;
                     Log.i(TAG, String.format("Current page no: %d", pageNum));
                     Toast.makeText(getApplicationContext(), String.format("Page %d", pageNum), Toast.LENGTH_SHORT).show();
+                    getSupportFragmentManager().beginTransaction().remove(imageFragment).commit();
                     loadImages();
                 }
             }
@@ -148,7 +152,13 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onItemClick(View v, int position) {
                             // TODO: FRAGMENT SET UP HERE
-                            Log.i(TAG, mList.get(position).getLargeImageURL());
+//                            Log.i(TAG, mList.get(position).getLargeImageURL());
+                            String largeImageUrl = mList.get(position).getLargeImageURL();
+                            int imageHeight = mList.get(position).getImageHeight();
+                            int imageWidth = mList.get(position).getImageWidth();
+                            String userName = mList.get(position).getUser();
+                            imageFragment = ImageFragment.newInstance(largeImageUrl, imageHeight, imageWidth, userName);
+                            getSupportFragmentManager().beginTransaction().replace(R.id.image_card_view_frame, imageFragment).commit();
                         }
                     });
                     recyclerView.setAdapter(rcAdapter);
