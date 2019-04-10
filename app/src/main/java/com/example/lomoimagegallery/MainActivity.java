@@ -6,6 +6,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.MenuItemCompat;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
@@ -28,6 +29,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
@@ -60,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
         progressBar.setVisibility(View.INVISIBLE);
 
         recyclerView = (RecyclerView) findViewById(R.id.image_recycler_view);
-        recyclerView.setHasFixedSize(true);
+        recyclerView.setHasFixedSize(false);
 
         switch(getScreenWidthFactor()) {
             case 2:
@@ -89,7 +92,10 @@ public class MainActivity extends AppCompatActivity {
                 pageNum++;
                 Log.i(TAG, String.format("Current page no: %d", pageNum));
                 Toast.makeText(getApplicationContext(), String.format("Page %d", pageNum), Toast.LENGTH_SHORT).show();
-                getSupportFragmentManager().beginTransaction().remove(imageFragment).commit();
+                if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                    getSupportFragmentManager().beginTransaction().remove(imageFragment).commit();
+                }
+                progressBar.setVisibility(View.VISIBLE);
                 loadImages();
             }
 
@@ -104,7 +110,10 @@ public class MainActivity extends AppCompatActivity {
                     pageNum--;
                     Log.i(TAG, String.format("Current page no: %d", pageNum));
                     Toast.makeText(getApplicationContext(), String.format("Page %d", pageNum), Toast.LENGTH_SHORT).show();
-                    getSupportFragmentManager().beginTransaction().remove(imageFragment).commit();
+                    if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                        getSupportFragmentManager().beginTransaction().remove(imageFragment).commit();
+                    }
+                    progressBar.setVisibility(View.VISIBLE);
                     loadImages();
                 }
             }
@@ -157,6 +166,7 @@ public class MainActivity extends AppCompatActivity {
                             int imageHeight = mList.get(position).getImageHeight();
                             int imageWidth = mList.get(position).getImageWidth();
                             String userName = mList.get(position).getUser();
+
                             imageFragment = ImageFragment.newInstance(largeImageUrl, imageHeight, imageWidth, userName);
                             getSupportFragmentManager().beginTransaction().replace(R.id.image_card_view_frame, imageFragment).commit();
                         }
