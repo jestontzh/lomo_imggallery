@@ -5,7 +5,9 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.squareup.picasso.Callback;
@@ -25,9 +27,12 @@ public class ImageFragment extends DialogFragment {
     private int imageWidth;
     private String userName;
 
+    private View mainView;
+    private ProgressBar progressBar;
     private ImageView imageView;
     private TextView dimensionsText;
     private TextView usernameText;
+    private Button downloadButton;
 
     public static ImageFragment newInstance(String largeImageUrl, int imageHeight, int imageWidth, String userName) {
         ImageFragment imageFragment = new ImageFragment();
@@ -54,19 +59,27 @@ public class ImageFragment extends DialogFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.image_fragment, parent, false);
+        mainView = inflater.inflate(R.layout.image_fragment, parent, false);
+//        mainView.setVisibility(View.GONE);
+        return mainView;
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
+        progressBar = (ProgressBar) view.findViewById(R.id.progress_circular);
+        progressBar.setVisibility(View.VISIBLE);
+        progressBar.setIndeterminate(true);
         imageView = (ImageView) view.findViewById(R.id.image_view);
         dimensionsText = (TextView) view.findViewById(R.id.dimensions_text);
         usernameText = (TextView) view.findViewById(R.id.username_text);
+        downloadButton = (Button) view.findViewById(R.id.download_button);
+        downloadButton.setVisibility(View.GONE);
 
         Picasso.with(context).load(this.largeImageUrl).into(imageView, new Callback() {
             @Override
             public void onSuccess() {
-                setTextViews();
+                progressBar.setVisibility(View.GONE);
+                showView();
             }
 
             @Override
@@ -74,12 +87,27 @@ public class ImageFragment extends DialogFragment {
 
             }
         });
+
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dismiss();
+            }
+        });
     }
 
-    private void setTextViews() {
+    private void showView() {
+//        mainView.setVisibility(View.VISIBLE);
         String dim = Integer.toString(this.imageHeight) + " x " + Integer.toString(this.imageWidth);
         dimensionsText.setText(dim);
         String user = "Submitted by: " + this.userName;
         usernameText.setText(user);
+        downloadButton.setVisibility(View.VISIBLE);
+        downloadButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // TODO: SET UP DOWNLOAD HERE
+            }
+        });
     }
 }
