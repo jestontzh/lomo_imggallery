@@ -8,13 +8,15 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import org.w3c.dom.Text;
 
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 
-public class ImageFragment extends Fragment {
+public class ImageFragment extends DialogFragment {
 
     private Context context;
 
@@ -32,7 +34,7 @@ public class ImageFragment extends Fragment {
         Bundle args = new Bundle();
         args.putString("largeImageUrl", largeImageUrl);
         args.putInt("imageHeight", imageHeight);
-        args.putInt("ImageWidth", imageWidth);
+        args.putInt("imageWidth", imageWidth);
         args.putString("userName", userName);
         imageFragment.setArguments(args);
         return imageFragment;
@@ -61,9 +63,23 @@ public class ImageFragment extends Fragment {
         dimensionsText = (TextView) view.findViewById(R.id.dimensions_text);
         usernameText = (TextView) view.findViewById(R.id.username_text);
 
-        Picasso.with(context).load(this.largeImageUrl).into(imageView);
+        Picasso.with(context).load(this.largeImageUrl).into(imageView, new Callback() {
+            @Override
+            public void onSuccess() {
+                setTextViews();
+            }
+
+            @Override
+            public void onError() {
+
+            }
+        });
+    }
+
+    private void setTextViews() {
         String dim = Integer.toString(this.imageHeight) + " x " + Integer.toString(this.imageWidth);
         dimensionsText.setText(dim);
-        usernameText.setText(this.userName);
+        String user = "Submitted by: " + this.userName;
+        usernameText.setText(user);
     }
 }
