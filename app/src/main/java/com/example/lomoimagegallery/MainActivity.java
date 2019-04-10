@@ -1,21 +1,5 @@
 package com.example.lomoimagegallery;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SearchView;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.core.view.MenuItemCompat;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.StaggeredGridLayoutManager;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.http.POST;
-
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -24,22 +8,35 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.squareup.picasso.Picasso;
-
+import java.util.ArrayList;
 import java.util.List;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int ACCESS_INTERNET_PERMISSIONS = 1;
+//    private static final int ACCESS_INTERNET_PERMISSIONS = 1;
+//    private static final int WRITE_EXTERNAL_STORAGE_PERMISSIONS = 2;
+//    private static final int READ_EXTERNAL_STORAGE_PERMISSIONS = 3;
+    private static final int PERMISSIONS_REQUEST_CODE = 1;
     private static final String TAG = "MainActivity";
     private static final String API_KEY = "12114072-7845e9d84252d3611d51cff25";
     private static final int RESULTS_PER_PAGE = 30;
+
 
     private ProgressBar progressBar;
     private StaggeredGridLayoutManager sglManager;
@@ -55,6 +52,17 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        String[] appPermissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.INTERNET};
+        ArrayList<String> permissionsNeeded = new ArrayList<>();
+        for (String permission : appPermissions) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                permissionsNeeded.add(permission);
+            }
+        }
+        if (!permissionsNeeded.isEmpty()) {
+            ActivityCompat.requestPermissions(this, permissionsNeeded.toArray(new String[permissionsNeeded.size()]), PERMISSIONS_REQUEST_CODE);
+        }
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.main_toolbar);
         setSupportActionBar(toolbar);
@@ -78,12 +86,6 @@ public class MainActivity extends AppCompatActivity {
         }
         sglManager = new StaggeredGridLayoutManager(spanCount, StaggeredGridLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(sglManager);
-
-        if (ContextCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET}, ACCESS_INTERNET_PERMISSIONS);
-        } else {
-            Log.i(TAG, "INTERNET permission already granted");
-        }
 
         recyclerView.setOnTouchListener(new OnSwipeTouchListener(this) {
             @Override
@@ -190,17 +192,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        switch(requestCode) {
-            case ACCESS_INTERNET_PERMISSIONS: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.i(TAG, "INTERNET Permission granted");
-                } else {
-                    Log.i(TAG, "INTERNET Permission not granted. Unable to continue");
-                }
-                return;
-            }
-        }
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        return;
     }
 
     private String convertQuery(String query) {
