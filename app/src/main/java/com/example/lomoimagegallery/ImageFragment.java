@@ -1,7 +1,11 @@
 package com.example.lomoimagegallery;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,16 +13,25 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
-import org.w3c.dom.Text;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 
 import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
 
 public class ImageFragment extends DialogFragment {
+
+    private final static String TAG = "ImageFragment";
 
     private Context context;
 
@@ -33,6 +46,8 @@ public class ImageFragment extends DialogFragment {
     private TextView dimensionsText;
     private TextView usernameText;
     private Button downloadButton;
+
+    private AsyncTask dTask;
 
     public static ImageFragment newInstance(String largeImageUrl, int imageHeight, int imageWidth, String userName) {
         ImageFragment imageFragment = new ImageFragment();
@@ -107,7 +122,61 @@ public class ImageFragment extends DialogFragment {
             @Override
             public void onClick(View v) {
                 // TODO: SET UP DOWNLOAD HERE
+                Log.i(TAG, String.format("Downloading URL: %s", largeImageUrl));
+                try {
+                    URL targetUrl = new URL(largeImageUrl);
+                    dTask = new DownloadTask().execute(targetUrl);
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
             }
         });
+    }
+
+    private class DownloadTask extends AsyncTask<URL, Void, Bitmap> {
+
+        private String urlString;
+
+        @Override
+        protected Bitmap doInBackground(URL... urls) {
+            URL url = urls[0];
+            urlString = url.toString();
+            URLConnection connection = null;
+
+            try {
+                connection = url.openConnection();
+                int contentLength = connection.getContentLength();
+
+                DataInputStream stream = new DataInputStream(url.openStream());
+
+                byte[] buffer = new byte[contentLength];
+                stream.readFully(buffer);
+                stream.close();
+
+                File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), generateFileName(urlString));
+                file.createNewFile();
+                DataOutputStream output = new DataOutputStream(new FileOutputStream(file));
+                output.write(buffer);
+                output.flush();
+                output.close();
+
+                // TODO: Show download progress in Notifications
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+
+            }
+            return null;
+        }
+
+        protected void onPostExecute(Bitmap result) {
+            Toast.makeText(getContext(), "Download Compelete", Toast.LENGTH_SHORT).show();
+        }
+
+        protected String generateFileName(String url) {
+            String[] stringArr = url.split("/");
+            String result = stringArr[stringArr.length-1];
+            return result;
+        }
     }
 }
