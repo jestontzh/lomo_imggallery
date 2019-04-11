@@ -1,8 +1,12 @@
 package com.example.lomoimagegallery;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -29,6 +33,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.DialogFragment;
 
 public class ImageFragment extends DialogFragment {
@@ -135,9 +141,11 @@ public class ImageFragment extends DialogFragment {
         });
     }
 
-    private class DownloadTask extends AsyncTask<URL, Void, Void> {
+    private class DownloadTask extends AsyncTask<URL, Integer, Void> {
 
         private String urlString;
+        private NotificationCompat.Builder builder;
+        private NotificationManagerCompat notificationManager;
 
         @Override
         protected Void doInBackground(URL... urls) {
@@ -149,8 +157,8 @@ public class ImageFragment extends DialogFragment {
                 connection.setRequestMethod("GET");
                 connection.setDoOutput(true);
                 connection.connect();
-                int fileSize = connection.getContentLength();
-                Log.i(TAG, String.format("File size: %d", fileSize));
+                float fileSize = connection.getContentLength();
+                Log.i(TAG, String.format("File size: %f", fileSize));
 
                 File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), generateFileName(urlString));
                 file.createNewFile();
@@ -158,16 +166,17 @@ public class ImageFragment extends DialogFragment {
                 InputStream inputStream = connection.getInputStream();
 
                 byte[] buffer = new byte[4096];
-                int len = 0;
+                int len;
+                float totalSize = 0;
 
                 while ((len = inputStream.read(buffer)) != -1) {
+                    totalSize += len;
+                    Integer percentage = new Integer((int) (totalSize / fileSize * 100));
+                    publishProgress(percentage);
                     fos.write(buffer, 0, len);
                 }
-
                 fos.close();
                 inputStream.close();
-
-                // TODO: Show download progress in Notifications
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
@@ -176,14 +185,55 @@ public class ImageFragment extends DialogFragment {
             return null;
         }
 
+        protected void onPreExecute() {
+            createNotificationChannel();
+        }
+
+        protected void onProgressUpdate(Integer... progress) {
+            builder.setProgress(100, progress[0], false);
+//            notificationManager.notify(getId(), builder.build());
+        }
+
         protected void onPostExecute(Void v) {
-            Toast.makeText(getContext(), "Download Compelete", Toast.LENGTH_SHORT).show();
+            builder.setContentText("Download Completed")
+                    .setSmallIcon(android.R.drawable.stat_sys_download_done)
+                    .setProgress(0, 0, false);
+            notificationManager.notify(getId(), builder.build());
+            Toast.makeText(getContext(), "Download Completed", Toast.LENGTH_SHORT).show();
         }
 
         protected String generateFileName(String url) {
             String[] stringArr = url.split("/");
             String result = stringArr[stringArr.length-1];
             return result;
+        }
+
+        private void createNotificationChannel() {
+            // Create the NotificationChannel, but only on API 26+ because
+            // the NotificationChannel class is new and not in the support library
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                CharSequence name = "Image Fragment Download Notification";
+                String description = "Downloading";
+                int importance = NotificationManager.IMPORTANCE_DEFAULT;
+                NotificationChannel channel = new NotificationChannel("IMAGE_FRAGMENT_CHANNEL", name, importance);
+                channel.setDescription(description);
+                // Register the channel with the system; you can't change the importance
+                // or other notification behaviors after this
+                NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
+                notificationManager.createNotificationChannel(channel);
+            }
+
+            notificationManager = NotificationManagerCompat.from(getContext());
+            builder = new NotificationCompat.Builder(getContext(), "IMAGE_FRAGMENT_CHANNEL")
+                    .setSmallIcon(android.R.drawable.stat_sys_download)
+                    .setContentTitle("Pixabay Image Download")
+                    .setContentText("Downloading...")
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setAutoCancel(true);
+
+            builder.setProgress(100, 0, true);
+            notificationManager.notify(getId(), builder.build());
+
         }
     }
 }
