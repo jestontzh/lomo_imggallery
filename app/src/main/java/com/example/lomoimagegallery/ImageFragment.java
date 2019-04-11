@@ -23,6 +23,8 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -133,32 +135,37 @@ public class ImageFragment extends DialogFragment {
         });
     }
 
-    private class DownloadTask extends AsyncTask<URL, Void, Bitmap> {
+    private class DownloadTask extends AsyncTask<URL, Void, Void> {
 
         private String urlString;
 
         @Override
-        protected Bitmap doInBackground(URL... urls) {
+        protected Void doInBackground(URL... urls) {
             URL url = urls[0];
             urlString = url.toString();
-            URLConnection connection = null;
 
             try {
-                connection = url.openConnection();
-                int contentLength = connection.getContentLength();
-
-                DataInputStream stream = new DataInputStream(url.openStream());
-
-                byte[] buffer = new byte[contentLength];
-                stream.readFully(buffer);
-                stream.close();
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setDoOutput(true);
+                connection.connect();
+                int fileSize = connection.getContentLength();
+                Log.i(TAG, String.format("File size: %d", fileSize));
 
                 File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), generateFileName(urlString));
                 file.createNewFile();
-                DataOutputStream output = new DataOutputStream(new FileOutputStream(file));
-                output.write(buffer);
-                output.flush();
-                output.close();
+                FileOutputStream fos = new FileOutputStream(file);
+                InputStream inputStream = connection.getInputStream();
+
+                byte[] buffer = new byte[4096];
+                int len = 0;
+
+                while ((len = inputStream.read(buffer)) != -1) {
+                    fos.write(buffer, 0, len);
+                }
+
+                fos.close();
+                inputStream.close();
 
                 // TODO: Show download progress in Notifications
             } catch (IOException e) {
@@ -169,7 +176,7 @@ public class ImageFragment extends DialogFragment {
             return null;
         }
 
-        protected void onPostExecute(Bitmap result) {
+        protected void onPostExecute(Void v) {
             Toast.makeText(getContext(), "Download Compelete", Toast.LENGTH_SHORT).show();
         }
 
